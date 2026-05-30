@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HydroSmart Hub — Smart Utility Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e27;
+    --bg2: #131836;
+    --surface: #1a2049;
+    --surface2: #232a5c;
+    --border: rgba(255,255,255,0.10);
+    --border-br: rgba(255,255,255,0.18);
+    --text: #f8faff;
+    --soft: #c5cce8;
+    --muted: #8189b8;
+
+    --water-1:#00d4ff; --water-2:#0099ff; --water-3:#006eff;
+    --solar-1:#ffd60a; --solar-2:#ff9500; --solar-3:#ff5e3a;
+    --filter-1:#00ffa3; --filter-2:#00d68f; --filter-3:#00a878;
+    --geyser-1:#ff4d8d; --geyser-2:#ff0080; --geyser-3:#c2185b;
+    --service-1:#b794f6; --service-2:#9f7aea; --service-3:#6b46c1;
+    --ticket-1:#ff8c42; --ticket-2:#ff5722; --ticket-3:#d84315;
+    --pay-1:#4ade80; --pay-2:#22c55e; --pay-3:#15803d;
+    --device-1:#38bdf8; --device-2:#0ea5e9; --device-3:#0369a1;
+
+    --ok:#4ade80; --warn:#ffd60a; --bad:#ff4d4d;
+
+    --display: 'Fraunces', Georgia, serif;
+    --body: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+
+    --radius: 20px;
+    --radius-sm: 12px;
+    --radius-lg: 28px;
+  }
+
+  html, body {
+    font-family: var(--body); font-size: 14px;
+    background: var(--bg); color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh; overflow-x: hidden;
+  }
+
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background:
+      radial-gradient(circle at 15% 25%, rgba(0,212,255,0.18) 0%, transparent 40%),
+      radial-gradient(circle at 85% 75%, rgba(255,0,128,0.14) 0%, transparent 40%),
+      radial-gradient(circle at 50% 90%, rgba(159,122,234,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 90% 10%, rgba(255,149,0,0.12) 0%, transparent 40%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ============ SCREENS ============ */
+  .screen { display: none; min-height: 100vh; position: relative; z-index: 1; }
+  .screen.active { display: block; }
+
+  /* ============ AUTH ============ */
+  .auth-page {
+    min-height: 100vh; display: grid; place-items: center;
+    padding: 24px; position: relative; overflow: hidden;
+  }
+
+  .auth-page::after {
+    content: ''; position: absolute;
+    width: 700px; height: 700px; border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--water-1), var(--filter-1), var(--solar-1), var(--geyser-1), var(--water-1));
+    filter: blur(140px); opacity: 0.3;
+    top: -250px; right: -200px;
+    animation: spin 25s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .auth-card {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 1100px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    background: rgba(26,32,73,0.55);
+    backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+    border: 1px solid var(--border-br);
+    border-radius: var(--radius-lg); overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+  }
+
+  .auth-art {
+    padding: 48px;
+    background: linear-gradient(135deg, rgba(0,110,255,0.45), rgba(255,0,128,0.35) 50%, rgba(255,149,0,0.45));
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden; min-height: 600px;
+  }
+
+  .auth-art::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(0,212,255,0.6), transparent 40%),
+      radial-gradient(circle at 70% 80%, rgba(255,0,128,0.5), transparent 40%);
+  }
+
+  .auth-art > * { position: relative; z-index: 1; }
+
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--display); font-weight: 900;
+    font-size: 24px; letter-spacing: -0.02em;
+  }
+
+  .brand-mark {
+    width: 48px; height: 48px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--water-1), var(--geyser-2));
+    display: grid; place-items: center; font-size: 26px;
+    box-shadow: 0 8px 24px rgba(0,212,255,0.4);
+  }
+
+  .auth-headline {
+    font-family: var(--display); font-weight: 900;
+    font-size: 60px; line-height: 0.98;
+    letter-spacing: -0.03em; margin: 40px 0 20px;
+  }
+
+  .auth-headline em {
+    font-style: italic; font-weight: 400;
+    background: linear-gradient(135deg, var(--solar-1), var(--geyser-1));
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+
+  .auth-sub {
+    font-size: 17px; color: var(--soft);
+    max-width: 420px; line-height: 1.6; margin-bottom: 32px;
+  }
+
+  .auth-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+  .auth-stat {
+    padding: 18px; background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: var(--radius-sm);
+  }
+
+  .auth-stat-value {
+    font-family: var(--display); font-size: 30px; font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--water-1), var(--filter-1));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  .auth-stat-label {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--soft);
+    margin-top: 6px; font-weight: 700;
+  }
+
+  .auth-form { padding: 56px 48px; display: flex; flex-direction: column; justify-content: center; }
+
+  .eyebrow {
+    font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.14em; color: var(--water-1);
+    font-weight: 800; margin-bottom: 12px;
+  }
+
+  .auth-form h2 {
+    font-family: var(--display); font-size: 40px; font-weight: 900;
+    letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 8px;
+  }
+
+  .auth-form h2 em { font-style: italic; font-weight: 400; color: var(--water-1); }
+
+  .auth-form .lede { color: var(--soft); font-size: 15px; margin-bottom: 28px; }
+
+  /* Forms */
+  .field { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+
+  .field label {
+    font-size: 12px; font-weight: 700; color: var(--soft);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  .field input, .field select, .field textarea {
+    font-family: inherit; font-size: 15px;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1.5px solid var(--border-br);
+    border-radius: var(--radius-sm);
+    color: var(--text); transition: all 0.2s;
+  }
+
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: var(--water-1);
+    background: rgba(0,212,255,0.08);
+    box-shadow: 0 0 0 4px rgba(0,212,255,0.15);
+  }
+
+  .field input::placeholder, .field textarea::placeholder { color: var(--muted); }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .role-picker { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+
+  .role-card {
+    padding: 16px 12px;
+    border: 1.5px solid var(--border-br);
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.03);
+    text-align: center; cursor: pointer;
+    transition: all 0.25s; user-select: none;
+  }
+
+  .role-card:hover {
+    background: rgba(0,212,255,0.08);
+    border-color: rgba(0,212,255,0.4);
+    transform: translateY(-2px);
+  }
+
+  .role-card.active {
+    background: linear-gradient(135deg, rgba(0,212,255,0.2), rgba(0,110,255,0.15));
+    border-color: var(--water-1);
+    box-shadow: 0 0 0 1px var(--water-1), 0 8px 24px rgba(0,212,255,0.25);
+  }
+
+  .role-icon { font-size: 24px; margin-bottom: 6px; }
+  .role-name { font-size: 13px; font-weight: 700; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 14px 22px; border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.25s;
+    text-decoration: none; color: white;
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--water-1), var(--water-3));
+    box-shadow: 0 8px 24px rgba(0,110,255,0.4);
+    position: relative; overflow: hidden;
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,110,255,0.55); }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    border: 1.5px solid var(--border-br);
+  }
+
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+
+  .btn-success {
+    background: linear-gradient(135deg, var(--pay-1), var(--pay-3));
+    box-shadow: 0 8px 24px rgba(74,222,128,0.4);
+  }
+
+  .btn-warn {
+    background: linear-gradient(135deg, var(--solar-1), var(--solar-3));
+    color: #1a1a1a;
+    box-shadow: 0 8px 24px rgba(255,149,0,0.4);
+  }
+
+  .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: 8px; }
+
+  .auth-footer {
+    margin-top: 24px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center; font-size: 14px; color: var(--soft);
+  }
+
+  .auth-footer a { color: var(--water-1); text-decoration: none; font-weight: 700; cursor: pointer; }
+  .auth-footer a:hover { text-decoration: underline; }
+
+  .demo-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 14px; padding: 8px 14px;
+    background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,197,94,0.15));
+    border: 1px solid rgba(74,222,128,0.4);
+    border-radius: 99px;
+    font-size: 12px; font-weight: 700; color: var(--pay-1);
+  }
+
+  .pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--pay-1);
+    box-shadow: 0 0 0 0 var(--pay-1);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(74,222,128,0); }
+    100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+  }
+
+  /* ============ APP SHELL ============ */
+  .app { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; position: relative; z-index: 1; }
+
+  .sidebar {
+    background: rgba(10,14,39,0.85);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border);
+    padding: 28px 20px;
+    display: flex; flex-direction: column; gap: 4px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+
+  .sidebar-brand {
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 12px 24px; margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--display); font-weight: 900;
+    font-size: 20px; letter-spacing: -0.02em;
+  }
+
+  .sb-mark {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--water-1), var(--geyser-2));
+    display: grid; place-items: center; font-size: 22px;
+    box-shadow: 0 6px 18px rgba(0,212,255,0.4);
+  }
+
+  .nav-section {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted);
+    font-weight: 700; padding: 18px 12px 8px;
+  }
+
+  .nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: 10px;
+    color: var(--soft); text-decoration: none;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    position: relative;
+  }
+
+  .nav-link:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+
+  .nav-link.active {
+    background: linear-gradient(135deg, rgba(0,212,255,0.18), rgba(0,110,255,0.10));
+    color: var(--text);
+    box-shadow: inset 3px 0 0 var(--water-1);
+  }
+
+  .nav-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: grid; place-items: center; font-size: 16px;
+    background: rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+
+  .nav-link.active .nav-icon { background: rgba(0,212,255,0.2); }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--ticket-2); color: white;
+    font-size: 11px; font-weight: 800;
+    padding: 2px 8px; border-radius: 99px;
+  }
+
+  .sb-user {
+    margin-top: auto; padding: 16px 12px;
+    background: rgba(255,255,255,0.04);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--geyser-1), var(--service-2));
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 14px;
+  }
+
+  .sb-user-info { flex: 1; min-width: 0; }
+  .sb-user-name { font-weight: 700; font-size: 13px; }
+  .sb-user-role { font-size: 11px; color: var(--muted); }
+
+  .sb-logout {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; padding: 6px; border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .sb-logout:hover { background: rgba(255,77,77,0.1); color: var(--bad); }
+
+  /* ============ MAIN ============ */
+  .main { padding: 28px 40px 60px; max-width: 100%; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+
+  .crumb {
+    font-size: 13px; color: var(--muted); font-weight: 600;
+  }
+
+  .crumb strong { color: var(--text); font-weight: 700; }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+  .icon-btn {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: grid; place-items: center;
+    cursor: pointer; transition: all 0.2s;
+    font-size: 18px;
+    position: relative;
+  }
+
+  .icon-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+
+  .icon-btn .dot {
+    position: absolute; top: 8px; right: 8px;
+    width: 8px; height: 8px;
+    background: var(--ticket-2); border-radius: 50%;
+    border: 2px solid var(--bg);
+  }
+
+  .page-head {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 24px; margin-bottom: 28px;
+  }
+
+  .page-head h1 {
+    font-family: var(--display); font-size: 44px; font-weight: 900;
+    letter-spacing: -0.025em; line-height: 1.05;
+  }
+
+  .page-head h1 em {
+    font-style: italic; font-weight: 400;
+    background: linear-gradient(135deg, var(--water-1), var(--geyser-1));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  .page-head .lede { color: var(--soft); font-size: 16px; margin-top: 8px; max-width: 600px; }
+
+  /* ============ KPI TILES ============ */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+
+  .kpi {
+    padding: 22px;
+    border-radius: var(--radius);
+    position: relative; overflow: hidden;
+    border: 1px solid var(--border);
+    transition: transform 0.3s;
+  }
+
+  .kpi:hover { transform: translateY(-4px); }
+
+  .kpi.water { background: linear-gradient(135deg, rgba(0,212,255,0.18), rgba(0,110,255,0.08)); border-color: rgba(0,212,255,0.3); }
+  .kpi.solar { background: linear-gradient(135deg, rgba(255,214,10,0.18), rgba(255,94,58,0.08)); border-color: rgba(255,149,0,0.3); }
+  .kpi.filter { background: linear-gradient(135deg, rgba(0,255,163,0.18), rgba(0,168,120,0.08)); border-color: rgba(0,255,163,0.3); }
+  .kpi.pay { background: linear-gradient(135deg, rgba(74,222,128,0.18), rgba(21,128,61,0.08)); border-color: rgba(74,222,128,0.3); }
+  .kpi.geyser { background: linear-gradient(135deg, rgba(255,77,141,0.18), rgba(194,24,91,0.08)); border-color: rgba(255,77,141,0.3); }
+  .kpi.service { background: linear-gradient(135deg, rgba(183,148,246,0.18), rgba(107,70,193,0.08)); border-color: rgba(183,148,246,0.3); }
+  .kpi.ticket { background: linear-gradient(135deg, rgba(255,140,66,0.18), rgba(216,67,21,0.08)); border-color: rgba(255,140,66,0.3); }
+  .kpi.device { background: linear-gradient(135deg, rgba(56,189,248,0.18), rgba(3,105,161,0.08)); border-color: rgba(56,189,248,0.3); }
+
+  .kpi::before {
+    content: ''; position: absolute;
+    width: 200px; height: 200px; border-radius: 50%;
+    top: -100px; right: -100px; opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .kpi.water::before { background: var(--water-1); }
+  .kpi.solar::before { background: var(--solar-1); }
+  .kpi.filter::before { background: var(--filter-1); }
+  .kpi.pay::before { background: var(--pay-1); }
+  .kpi.geyser::before { background: var(--geyser-1); }
+  .kpi.service::before { background: var(--service-1); }
+  .kpi.ticket::before { background: var(--ticket-1); }
+  .kpi.device::before { background: var(--device-1); }
+
+  .kpi-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: grid; place-items: center; font-size: 22px;
+    margin-bottom: 14px;
+  }
+
+  .kpi.water .kpi-icon { background: linear-gradient(135deg, var(--water-1), var(--water-3)); }
+  .kpi.solar .kpi-icon { background: linear-gradient(135deg, var(--solar-1), var(--solar-3)); }
+  .kpi.filter .kpi-icon { background: linear-gradient(135deg, var(--filter-1), var(--filter-3)); }
+  .kpi.pay .kpi-icon { background: linear-gradient(135deg, var(--pay-1), var(--pay-3)); }
+  .kpi.geyser .kpi-icon { background: linear-gradient(135deg, var(--geyser-1), var(--geyser-3)); }
+  .kpi.service .kpi-icon { background: linear-gradient(135deg, var(--service-1), var(--service-3)); }
+  .kpi.ticket .kpi-icon { background: linear-gradient(135deg, var(--ticket-1), var(--ticket-3)); }
+  .kpi.device .kpi-icon { background: linear-gradient(135deg, var(--device-1), var(--device-3)); }
+
+  .kpi-label {
+    font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--soft);
+    font-weight: 700; margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-family: var(--display); font-size: 38px; font-weight: 900;
+    line-height: 1; letter-spacing: -0.02em;
+  }
+
+  .kpi-unit { font-size: 16px; color: var(--soft); font-weight: 600; margin-left: 4px; }
+
+  .kpi-trend {
+    margin-top: 10px; font-size: 12px; font-weight: 600;
+    color: var(--soft);
+  }
+
+  .kpi-trend strong { color: var(--ok); }
+  .kpi-trend.down strong { color: var(--bad); }
+
+  /* ============ CARD GENERIC ============ */
+  .card {
+    background: rgba(26,32,73,0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-head {
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px;
+  }
+
+  .card-head h3 {
+    font-family: var(--display); font-size: 22px; font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .card-head .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .card-body { padding: 24px; }
+
+  /* ============ DEVICE CARDS ============ */
+  .devices-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-bottom: 28px; }
+
+  .device-card {
+    padding: 24px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    position: relative; overflow: hidden;
+    background: rgba(26,32,73,0.5);
+    backdrop-filter: blur(20px);
+    transition: all 0.3s;
+  }
+
+  .device-card:hover { transform: translateY(-3px); border-color: var(--border-br); }
+
+  .device-card.geyser { border-top: 3px solid var(--geyser-1); }
+  .device-card.solar { border-top: 3px solid var(--solar-1); }
+  .device-card.tank { border-top: 3px solid var(--water-1); }
+  .device-card.filter { border-top: 3px solid var(--filter-1); }
+
+  .device-head {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .device-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: grid; place-items: center; font-size: 26px;
+  }
+
+  .device-icon.geyser { background: linear-gradient(135deg, var(--geyser-1), var(--geyser-3)); box-shadow: 0 8px 20px rgba(255,0,128,0.3); }
+  .device-icon.solar { background: linear-gradient(135deg, var(--solar-1), var(--solar-3)); box-shadow: 0 8px 20px rgba(255,149,0,0.3); }
+  .device-icon.tank { background: linear-gradient(135deg, var(--water-1), var(--water-3)); box-shadow: 0 8px 20px rgba(0,212,255,0.3); }
+  .device-icon.filter { background: linear-gradient(135deg, var(--filter-1), var(--filter-3)); box-shadow: 0 8px 20px rgba(0,255,163,0.3); }
+
+  .device-name { font-family: var(--display); font-size: 22px; font-weight: 800; line-height: 1.1; }
+  .device-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .status-pill {
+    margin-left: auto;
+    padding: 5px 12px; border-radius: 99px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+
+  .status-pill.ok { background: rgba(74,222,128,0.18); color: var(--ok); border: 1px solid rgba(74,222,128,0.4); }
+  .status-pill.warn { background: rgba(255,214,10,0.18); color: var(--warn); border: 1px solid rgba(255,214,10,0.4); }
+  .status-pill.bad { background: rgba(255,77,77,0.18); color: var(--bad); border: 1px solid rgba(255,77,77,0.4); }
+  .status-pill.info { background: rgba(0,212,255,0.18); color: var(--water-1); border: 1px solid rgba(0,212,255,0.4); }
+
+  .device-stats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    padding-top: 16px; border-top: 1px solid var(--border);
+  }
+
+  .ds-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+  .ds-value { font-family: var(--display); font-size: 22px; font-weight: 800; margin-top: 4px; }
+  .ds-sub { font-size: 12px; color: var(--soft); margin-top: 2px; }
+
+  /* ============ WATER TANK ============ */
+  .tank-vis {
+    width: 100%; max-width: 280px; height: 320px;
+    margin: 0 auto;
+    border-radius: 24px;
+    background: rgba(0,0,0,0.3);
+    border: 3px solid var(--water-1);
+    position: relative; overflow: hidden;
+    box-shadow: inset 0 0 30px rgba(0,212,255,0.2), 0 0 40px rgba(0,212,255,0.3);
+  }
+
+  .tank-water {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, var(--water-1), var(--water-3));
+    transition: height 1s ease;
+    box-shadow: 0 -4px 20px rgba(0,212,255,0.5);
+  }
+
+  .tank-water::before, .tank-water::after {
+    content: ''; position: absolute;
+    top: -15px; left: -25%; width: 150%; height: 30px;
+    background: var(--water-1);
+    border-radius: 50%;
+    animation: wave 3s ease-in-out infinite;
+    opacity: 0.7;
+  }
+
+  .tank-water::after {
+    animation: wave 4s ease-in-out infinite reverse;
+    top: -10px; opacity: 0.4;
+    background: var(--water-2);
+  }
+
+  @keyframes wave {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    50% { transform: translateX(-20px) rotate(2deg); }
+  }
+
+  .tank-percent {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    font-family: var(--display); font-size: 64px;
+    font-weight: 900; color: white;
+    text-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    z-index: 2;
+  }
+
+  .tank-marks {
+    position: absolute; right: 12px; top: 12px; bottom: 12px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    z-index: 2;
+  }
+
+  .tank-mark {
+    font-family: var(--mono); font-size: 10px;
+    color: rgba(255,255,255,0.6); font-weight: 700;
+  }
+
+  /* ============ TWO-COL LAYOUTS ============ */
+  .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin-bottom: 28px; }
+  .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 28px; }
+
+  /* ============ TABLES ============ */
+  .table-wrap { overflow-x: auto; }
+
+  table.data {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  table.data th {
+    text-align: left; padding: 14px 16px;
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.08em; font-weight: 800;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+
+  table.data td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  table.data tr:hover td { background: rgba(0,212,255,0.04); }
+
+  table.data tr:last-child td { border-bottom: none; }
+
+  /* ============ CIRCULAR GAUGE ============ */
+  .gauge-wrap { display: grid; place-items: center; padding: 20px 0; }
+
+  .gauge-svg { width: 200px; height: 200px; transform: rotate(-90deg); }
+
+  .gauge-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 14; }
+  .gauge-fill {
+    fill: none; stroke-width: 14; stroke-linecap: round;
+    transition: stroke-dashoffset 1.2s ease;
+  }
+
+  .gauge-center {
+    position: absolute;
+    text-align: center;
+  }
+
+  .gauge-value {
+    font-family: var(--display);
+    font-size: 44px; font-weight: 900;
+    line-height: 1;
+  }
+
+  .gauge-label {
+    font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted);
+    font-weight: 700; margin-top: 4px;
+  }
+
+  /* ============ BARS / CHARTS ============ */
+  .bar-chart { display: flex; align-items: flex-end; gap: 12px; height: 220px; padding: 12px 0 8px; }
+
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+  .bar-bar {
+    width: 100%; max-width: 40px;
+    border-radius: 8px 8px 4px 4px;
+    background: linear-gradient(180deg, var(--solar-1), var(--solar-2));
+    box-shadow: 0 4px 12px rgba(255,149,0,0.3);
+    position: relative;
+    transition: height 0.8s ease;
+  }
+
+  .bar-bar.water { background: linear-gradient(180deg, var(--water-1), var(--water-3)); box-shadow: 0 4px 12px rgba(0,212,255,0.3); }
+
+  .bar-val {
+    position: absolute; top: -22px;
+    width: 100%; text-align: center;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+  }
+
+  .bar-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+
+  /* ============ ACTIVITY FEED ============ */
+  .activity-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .activity-item {
+    display: flex; gap: 14px; padding: 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--water-1);
+    transition: all 0.2s;
+  }
+
+  .activity-item:hover { background: rgba(0,212,255,0.05); transform: translateX(4px); }
+
+  .activity-item.solar { border-left-color: var(--solar-1); }
+  .activity-item.filter { border-left-color: var(--filter-1); }
+  .activity-item.geyser { border-left-color: var(--geyser-1); }
+  .activity-item.service { border-left-color: var(--service-1); }
+  .activity-item.ticket { border-left-color: var(--ticket-1); }
+  .activity-item.pay { border-left-color: var(--pay-1); }
+
+  .a-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: grid; place-items: center; font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .activity-item .a-icon { background: rgba(0,212,255,0.15); }
+  .activity-item.solar .a-icon { background: rgba(255,149,0,0.15); }
+  .activity-item.filter .a-icon { background: rgba(0,255,163,0.15); }
+  .activity-item.geyser .a-icon { background: rgba(255,0,128,0.15); }
+  .activity-item.service .a-icon { background: rgba(159,122,234,0.15); }
+  .activity-item.ticket .a-icon { background: rgba(255,87,34,0.15); }
+  .activity-item.pay .a-icon { background: rgba(74,222,128,0.15); }
+
+  .a-content { flex: 1; min-width: 0; }
+  .a-title { font-weight: 700; font-size: 14px; }
+  .a-time { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+
+  /* ============ AMC PROMO ============ */
+  .amc-card {
+    padding: 28px;
+    background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,197,94,0.1));
+    border: 1px solid rgba(74,222,128,0.4);
+    border-radius: var(--radius);
+    position: relative; overflow: hidden;
+  }
+
+  .amc-card::before {
+    content: '✦'; position: absolute;
+    font-size: 200px; opacity: 0.06;
+    right: -30px; bottom: -60px;
+    color: var(--pay-1);
+  }
+
+  .amc-tag {
+    display: inline-block; padding: 4px 12px;
+    background: var(--pay-2); color: white;
+    border-radius: 99px; font-size: 11px;
+    font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 14px;
+  }
+
+  .amc-card h3 {
+    font-family: var(--display); font-size: 28px;
+    font-weight: 900; line-height: 1.1; margin-bottom: 8px;
+  }
+
+  .amc-price {
+    font-family: var(--display); font-size: 32px; font-weight: 900;
+    margin: 14px 0;
+  }
+
+  .amc-price small { font-size: 14px; color: var(--soft); font-weight: 600; }
+
+  .amc-benefits { list-style: none; padding: 14px 0; font-size: 13px; }
+  .amc-benefits li { padding: 4px 0; padding-left: 22px; position: relative; }
+  .amc-benefits li::before {
+    content: '✓'; position: absolute; left: 0;
+    color: var(--pay-1); font-weight: 900;
+  }
+
+  /* ============ COMPLAINTS ============ */
+  .ticket-card {
+    padding: 22px;
+    border-radius: var(--radius);
+    background: rgba(26,32,73,0.6);
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+    transition: all 0.2s;
+  }
+
+  .ticket-card:hover { border-color: var(--border-br); }
+
+  .ticket-card.expanded { border-color: var(--ticket-2); box-shadow: 0 8px 32px rgba(255,87,34,0.2); }
+
+  .ticket-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
+
+  .ticket-id { font-family: var(--mono); font-size: 12px; color: var(--muted); font-weight: 700; }
+  .ticket-title { font-family: var(--display); font-size: 20px; font-weight: 800; margin-top: 4px; }
+  .ticket-meta { font-size: 12px; color: var(--soft); margin-top: 6px; }
+
+  .stepper {
+    display: flex; align-items: center; gap: 0;
+    margin: 18px 0; padding: 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: var(--radius-sm);
+  }
+
+  .step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; }
+
+  .step::after {
+    content: ''; position: absolute;
+    top: 14px; left: 50%; right: -50%; height: 2px;
+    background: var(--border);
+  }
+
+  .step:last-child::after { display: none; }
+
+  .step.done::after, .step.current::after { background: var(--ticket-2); }
+
+  .step-circle {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid var(--border);
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 800;
+    z-index: 1; position: relative;
+    transition: all 0.3s;
+  }
+
+  .step.done .step-circle {
+    background: var(--ticket-2); border-color: var(--ticket-2);
+    color: white;
+  }
+
+  .step.current .step-circle {
+    background: linear-gradient(135deg, var(--ticket-1), var(--ticket-3));
+    border-color: var(--ticket-1);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(255,87,34,0.2);
+    animation: stepPulse 2s infinite;
+  }
+
+  @keyframes stepPulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(255,87,34,0.2); }
+    50% { box-shadow: 0 0 0 8px rgba(255,87,34,0.1); }
+  }
+
+  .step-label {
+    font-size: 11px; font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  .step.done .step-label, .step.current .step-label { color: var(--text); }
+
+  .severity-toggle {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  }
+
+  .sev {
+    padding: 10px; border-radius: 10px;
+    border: 1.5px solid var(--border-br);
+    text-align: center; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    background: rgba(255,255,255,0.03);
+  }
+
+  .sev:hover { background: rgba(255,255,255,0.08); }
+
+  .sev.active.low { background: rgba(74,222,128,0.2); border-color: var(--pay-1); color: var(--pay-1); }
+  .sev.active.med { background: rgba(255,214,10,0.2); border-color: var(--warn); color: var(--warn); }
+  .sev.active.high { background: rgba(255,77,77,0.2); border-color: var(--bad); color: var(--bad); }
+
+  /* ============ INVOICE ============ */
+  .invoice-card {
+    padding: 28px;
+    background: linear-gradient(135deg, var(--ticket-1), var(--ticket-3));
+    border-radius: var(--radius);
+    color: white;
+    position: relative; overflow: hidden;
+    box-shadow: 0 16px 48px rgba(255,87,34,0.3);
+  }
+
+  .invoice-card::before {
+    content: ''; position: absolute;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    top: -150px; right: -100px;
+  }
+
+  .invoice-card > * { position: relative; z-index: 1; }
+
+  .invoice-amount {
+    font-family: var(--display); font-size: 60px;
+    font-weight: 900; line-height: 1; margin: 14px 0;
+  }
+
+  .invoice-due {
+    background: rgba(0,0,0,0.2); padding: 6px 14px;
+    border-radius: 99px; display: inline-block;
+    font-size: 12px; font-weight: 700; margin-top: 4px;
+  }
+
+  .pay-methods { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+
+  .pay-method {
+    padding: 16px 10px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border-br);
+    background: rgba(255,255,255,0.03);
+    text-align: center; cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .pay-method:hover { background: rgba(255,255,255,0.08); }
+
+  .pay-method.active {
+    background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,197,94,0.1));
+    border-color: var(--pay-1);
+  }
+
+  .pay-icon { font-size: 24px; margin-bottom: 6px; }
+  .pay-name { font-size: 12px; font-weight: 700; }
+
+  /* ============ SVG CHARTS ============ */
+  .chart-svg { width: 100%; height: auto; }
+
+  /* ============ FILTER CHIPS ============ */
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+
+  .chip {
+    padding: 8px 14px; border-radius: 99px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-br);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+
+  .chip:hover { background: rgba(255,255,255,0.08); }
+  .chip.active { background: var(--water-1); color: var(--bg); border-color: var(--water-1); font-weight: 800; }
+
+  /* ============ ALERT BANNERS ============ */
+  .alert {
+    padding: 18px 22px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 22px;
+    border: 1px solid;
+  }
+
+  .alert.warn {
+    background: linear-gradient(135deg, rgba(255,77,77,0.15), rgba(255,77,77,0.05));
+    border-color: rgba(255,77,77,0.4);
+  }
+
+  .alert-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: grid; place-items: center; font-size: 22px;
+    flex-shrink: 0;
+    background: rgba(255,77,77,0.2);
+  }
+
+  .alert-title { font-weight: 800; font-size: 15px; }
+  .alert-desc { font-size: 13px; color: var(--soft); margin-top: 3px; }
+
+  /* ============ STARS ============ */
+  .stars { color: var(--solar-1); font-size: 14px; letter-spacing: 2px; }
+
+  /* ============ FADE-UP ANIMATION ============ */
+  .fade-up { animation: fadeUp 0.6s ease both; }
+  .stagger > * { animation: fadeUp 0.6s ease both; }
+  .stagger > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.10s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.15s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.20s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.25s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.30s; }
+  .stagger > *:nth-child(7) { animation-delay: 0.35s; }
+  .stagger > *:nth-child(8) { animation-delay: 0.40s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============ MISC ============ */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .form-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+
+  .field.full { grid-column: span 2; }
+
+  .price-big {
+    font-family: var(--display); font-size: 52px;
+    font-weight: 900; line-height: 1;
+  }
+
+  .timeline {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 0;
+  }
+
+  .timeline-pt {
+    flex: 1; text-align: center; padding: 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: var(--radius-sm);
+  }
+
+  .timeline-line {
+    flex: 0 0 60px; height: 2px;
+    background: linear-gradient(90deg, var(--filter-1), var(--ticket-2));
+  }
+
+  .timeline-date {
+    font-family: var(--display); font-size: 18px; font-weight: 800;
+  }
+
+  .timeline-label {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted);
+    font-weight: 700; margin-top: 4px;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1100px) {
+    .auth-card { grid-template-columns: 1fr; }
+    .auth-art { display: none; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .three-col { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 800px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 20px; }
+    .page-head { flex-direction: column; align-items: flex-start; }
+    .page-head h1 { font-size: 32px; }
+    .two-col { grid-template-columns: 1fr; }
+    .devices-grid { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .field.full { grid-column: span 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN SCREEN
+     ============================================================ -->
+<div class="screen active" id="screen-login">
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-art">
+        <div class="brand">
+          <div class="brand-mark">💧</div>
+          HydroSmart Hub
+        </div>
+        <div>
+          <h1 class="auth-headline">Every drop,<br>every watt,<br><em>in your control.</em></h1>
+          <p class="auth-sub">Monitor your geyser, solar panels, water tank and filter from one beautifully simple dashboard. Set up service, pay bills, raise tickets — all in one place.</p>
+        </div>
+        <div class="auth-stats">
+          <div class="auth-stat">
+            <div class="auth-stat-value">12K+</div>
+            <div class="auth-stat-label">Homes</div>
+          </div>
+          <div class="auth-stat">
+            <div class="auth-stat-value">98%</div>
+            <div class="auth-stat-label">Uptime</div>
+          </div>
+          <div class="auth-stat">
+            <div class="auth-stat-value">4.9</div>
+            <div class="auth-stat-label">Rating</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-form">
+        <div class="eyebrow">— Welcome back</div>
+        <h2>Sign in to your <em>account</em></h2>
+        <p class="lede">Enter anything below — this is a demo and any credentials will work.</p>
+
+        <form onsubmit="event.preventDefault(); doLogin();">
+          <div class="field">
+            <label>Email or username</label>
+            <input type="text" id="login-email" placeholder="anything@works.com" value="aisha@hydrosmart.app" />
+          </div>
+
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="login-pass" placeholder="any password works" value="demo1234" />
+          </div>
+
+          <div style="font-size: 12px; font-weight: 700; color: var(--soft); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">Sign in as</div>
+          <div class="role-picker">
+            <div class="role-card active" onclick="pickRole(this, 'Customer')">
+              <div class="role-icon">🏠</div>
+              <div class="role-name">Customer</div>
+            </div>
+            <div class="role-card" onclick="pickRole(this, 'Technician')">
+              <div class="role-icon">🔧</div>
+              <div class="role-name">Technician</div>
+            </div>
+            <div class="role-card" onclick="pickRole(this, 'Admin')">
+              <div class="role-icon">👑</div>
+              <div class="role-name">Admin</div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" onclick="doLogin(); return false;">Sign in →</button>
+
+          <div style="text-align: center;">
+            <span class="demo-tag">
+              <span class="pulse-dot"></span>
+              Demo mode — any input logs you in
+            </span>
+          </div>
+
+          <div class="auth-footer">
+            New to HydroSmart? <a onclick="show('register')">Create an account</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     REGISTER SCREEN
+     ============================================================ -->
+<div class="screen" id="screen-register">
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-art">
+        <div class="brand">
+          <div class="brand-mark">💧</div>
+          HydroSmart Hub
+        </div>
+        <div>
+          <h1 class="auth-headline">Join the <em>smart utility</em> revolution.</h1>
+          <p class="auth-sub">Register in 30 seconds and connect your first device. Get instant alerts, predictive service reminders, and full visibility into your home's water and energy.</p>
+        </div>
+        <div class="auth-stats">
+          <div class="auth-stat">
+            <div class="auth-stat-value">8</div>
+            <div class="auth-stat-label">Modules</div>
+          </div>
+          <div class="auth-stat">
+            <div class="auth-stat-value">24/7</div>
+            <div class="auth-stat-label">Support</div>
+          </div>
+          <div class="auth-stat">
+            <div class="auth-stat-value">₹0</div>
+            <div class="auth-stat-label">To start</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-form" style="padding: 40px 48px;">
+        <div class="eyebrow">— Create account</div>
+        <h2>Get <em>started</em> for free</h2>
+        <p class="lede">No credit card needed. Add devices later.</p>
+
+        <form onsubmit="event.preventDefault(); doLogin();">
+          <div class="field-row">
+            <div class="field">
+              <label>Full name</label>
+              <input type="text" placeholder="Aisha Patel" />
+            </div>
+            <div class="field">
+              <label>Mobile</label>
+              <input type="tel" placeholder="+91 98xxxxxxxx" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Email</label>
+            <input type="email" placeholder="you@email.com" />
+          </div>
+
+          <div class="field">
+            <label>Address</label>
+            <textarea rows="2" placeholder="Apartment, street, city, PIN" style="resize: vertical;"></textarea>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>Password</label>
+              <input type="password" placeholder="Min 8 characters" />
+            </div>
+            <div class="field">
+              <label>Confirm</label>
+              <input type="password" placeholder="Re-enter" />
+            </div>
+          </div>
+
+          <div style="font-size: 12px; font-weight: 700; color: var(--soft); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">Account type</div>
+          <div class="role-picker">
+            <div class="role-card active" onclick="pickRole(this, 'Customer')">
+              <div class="role-icon">🏠</div>
+              <div class="role-name">Customer</div>
+            </div>
+            <div class="role-card" onclick="pickRole(this, 'Technician')">
+              <div class="role-icon">🔧</div>
+              <div class="role-name">Technician</div>
+            </div>
+            <div class="role-card" onclick="pickRole(this, 'Admin')">
+              <div class="role-icon">👑</div>
+              <div class="role-name">Admin</div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" onclick="doLogin(); return false;">Create account →</button>
+
+          <div class="auth-footer">
+            Already have an account? <a onclick="show('login')">Sign in</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP SHELL (shared across module screens via JS)
+     ============================================================ -->
+<div class="screen" id="screen-app">
+  <div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sb-mark">💧</div>
+        HydroSmart
+      </div>
+
+      <div class="nav-section">Overview</div>
+      <a class="nav-link" data-page="dashboard" onclick="goto('dashboard')">
+        <span class="nav-icon">📊</span>Dashboard
+      </a>
+
+      <div class="nav-section">Monitoring</div>
+      <a class="nav-link" data-page="water" onclick="goto('water')">
+        <span class="nav-icon" style="background: rgba(0,212,255,0.15);">💧</span>Water Tank
+      </a>
+      <a class="nav-link" data-page="solar" onclick="goto('solar')">
+        <span class="nav-icon" style="background: rgba(255,149,0,0.15);">☀️</span>Solar Energy
+      </a>
+      <a class="nav-link" data-page="filter" onclick="goto('filter')">
+        <span class="nav-icon" style="background: rgba(0,255,163,0.15);">⚗️</span>Water Filter
+      </a>
+
+      <div class="nav-section">Service</div>
+      <a class="nav-link" data-page="service" onclick="goto('service')">
+        <span class="nav-icon" style="background: rgba(159,122,234,0.15);">🛠️</span>Service History
+      </a>
+      <a class="nav-link" data-page="complaints" onclick="goto('complaints')">
+        <span class="nav-icon" style="background: rgba(255,87,34,0.15);">🎫</span>Complaints
+        <span class="nav-badge">3</span>
+      </a>
+
+      <div class="nav-section">Account</div>
+      <a class="nav-link" data-page="payments" onclick="goto('payments')">
+        <span class="nav-icon" style="background: rgba(74,222,128,0.15);">💳</span>Payments
+      </a>
+      <a class="nav-link" data-page="devices" onclick="goto('devices')">
+        <span class="nav-icon" style="background: rgba(56,189,248,0.15);">🔌</span>My Devices
+      </a>
+
+      <div class="sb-user">
+        <div class="avatar" id="sb-avatar">AP</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name" id="sb-user-name">Aisha Patel</div>
+          <div class="sb-user-role" id="sb-user-role">Customer</div>
+        </div>
+        <button class="sb-logout" title="Sign out" onclick="doLogout()">⏻</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div class="crumb">HydroSmart Hub <span style="opacity: 0.4;">/</span> <strong id="crumb-page">Dashboard</strong></div>
+        <div class="topbar-right">
+          <div class="icon-btn" title="Search">🔍</div>
+          <div class="icon-btn" title="Notifications">🔔<span class="dot"></span></div>
+          <div class="icon-btn" title="Settings">⚙️</div>
+        </div>
+      </div>
+
+      <div id="page-content"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE TEMPLATES (rendered dynamically)
+     ============================================================ -->
+<template id="tpl-dashboard">
+  <div class="page-head fade-up">
+    <div>
+      <div class="eyebrow">— Good morning, Aisha</div>
+      <h1>Your home is <em>running smoothly</em>.</h1>
+      <p class="lede">Everything looks good today. The water tank refilled overnight, solar generation is on track, and your filter has 38% health remaining.</p>
+    </div>
+  </div>
+
+  <div class="kpi-grid stagger">
+    <div class="kpi water">
+      <div class="kpi-icon">💧</div>
+      <div class="kpi-label">Water Level</div>
+      <div class="kpi-value">72<span class="kpi-unit">%</span></div>
+      <div class="kpi-trend">720L of 1000L · <strong>Healthy</strong></div>
+    </div>
+    <div class="kpi solar">
+      <div class="kpi-icon">☀️</div>
+      <div class="kpi-label">Solar Today</div>
+      <div class="kpi-value">14.6<span class="kpi-unit">kWh</span></div>
+      <div class="kpi-trend">▲ <strong>+12%</strong> vs yesterday</div>
+    </div>
+    <div class="kpi filter">
+      <div class="kpi-icon">⚗️</div>
+      <div class="kpi-label">Filter Health</div>
+      <div class="kpi-value">38<span class="kpi-unit">%</span></div>
+      <div class="kpi-trend down"><strong style="color: var(--bad);">Replace soon</strong></div>
+    </div>
+    <div class="kpi pay">
+      <div class="kpi-icon">💳</div>
+      <div class="kpi-label">Amount Due</div>
+      <div class="kpi-value">₹2,450</div>
+      <div class="kpi-trend">Due in <strong style="color: var(--warn);">6 days</strong></div>
+    </div>
+  </div>
+
+  <div class="devices-grid stagger">
+    <div class="device-card geyser">
+      <div class="device-head">
+        <div class="device-icon geyser">♨️</div>
+        <div>
+          <div class="device-name">Geyser</div>
+          <div class="device-meta">Racold Eterno · 25L</div>
+        </div>
+        <span class="status-pill ok"><span class="pulse-dot"></span>Active</span>
+      </div>
+      <div class="device-stats">
+        <div>
+          <div class="ds-label">Temperature</div>
+          <div class="ds-value" style="color: var(--geyser-1);">62°C</div>
+          <div class="ds-sub">Set: 60°C</div>
+        </div>
+        <div>
+          <div class="ds-label">Next Service</div>
+          <div class="ds-value">Aug 15</div>
+          <div class="ds-sub">In 3 months</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="device-card solar">
+      <div class="device-head">
+        <div class="device-icon solar">☀️</div>
+        <div>
+          <div class="device-name">Solar Panel</div>
+          <div class="device-meta">Tata 3kW · 8 panels</div>
+        </div>
+        <span class="status-pill ok"><span class="pulse-dot"></span>Generating</span>
+      </div>
+      <div class="device-stats">
+        <div>
+          <div class="ds-label">Efficiency</div>
+          <div class="ds-value" style="color: var(--solar-1);">90%</div>
+          <div class="ds-sub">Excellent</div>
+        </div>
+        <div>
+          <div class="ds-label">Last Cleaned</div>
+          <div class="ds-value">Apr 22</div>
+          <div class="ds-sub">13 days ago</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="device-card tank">
+      <div class="device-head">
+        <div class="device-icon tank">🪣</div>
+        <div>
+          <div class="device-name">Water Tank</div>
+          <div class="device-meta">Sintex 1000L</div>
+        </div>
+        <span class="status-pill ok"><span class="pulse-dot"></span>Healthy</span>
+      </div>
+      <div class="device-stats">
+        <div>
+          <div class="ds-label">Current Level</div>
+          <div class="ds-value" style="color: var(--water-1);">72%</div>
+          <div class="ds-sub">720L</div>
+        </div>
+        <div>
+          <div class="ds-label">Daily Avg Use</div>
+          <div class="ds-value">142L</div>
+          <div class="ds-sub">5 days remaining</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="device-card filter">
+      <div class="device-head">
+        <div class="device-icon filter">⚗️</div>
+        <div>
+          <div class="device-name">Water Filter</div>
+          <div class="device-meta">Aquaguard RO+UV</div>
+        </div>
+        <span class="status-pill warn">⚠ Replace</span>
+      </div>
+      <div class="device-stats">
+        <div>
+          <div class="ds-label">Health</div>
+          <div class="ds-value" style="color: var(--bad);">38%</div>
+          <div class="ds-sub">TDS 142 ppm</div>
+        </div>
+        <div>
+          <div class="ds-label">Next Replace</div>
+          <div class="ds-value">May 15</div>
+          <div class="ds-sub">In 10 days</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card fade-up">
+      <div class="card-head">
+        <div>
+          <h3>Recent activity</h3>
+          <div class="sub">Last 24 hours across your devices</div>
+        </div>
+        <a class="btn btn-ghost btn-sm">View all</a>
+      </div>
+      <div class="card-body">
+        <div class="activity-list stagger">
+          <div class="activity-item">
+            <div class="a-icon">💧</div>
+            <div class="a-content">
+              <div class="a-title">Tank refilled to 100% (1000L)</div>
+              <div class="a-time">Today · 04:12 AM</div>
+            </div>
+          </div>
+          <div class="activity-item solar">
+            <div class="a-icon">☀️</div>
+            <div class="a-content">
+              <div class="a-title">Peak generation: 2.4kW at 12:30 PM</div>
+              <div class="a-time">Today · 12:30 PM</div>
+            </div>
+          </div>
+          <div class="activity-item filter">
+            <div class="a-icon">⚠️</div>
+            <div class="a-content">
+              <div class="a-title">Filter health dropped below 40%</div>
+              <div class="a-time">Yesterday · 09:18 PM</div>
+            </div>
+          </div>
+          <div class="activity-item pay">
+            <div class="a-icon">💳</div>
+            <div class="a-content">
+              <div class="a-title">Invoice INV-2026-0501 generated · ₹2,450</div>
+              <div class="a-time">Yesterday · 06:00 PM</div>
+            </div>
+          </div>
+          <div class="activity-item ticket">
+            <div class="a-icon">🎫</div>
+            <div class="a-content">
+              <div class="a-title">Complaint #TKT-2026-038 — technician assigned</div>
+              <div class="a-time">2 days ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="amc-card fade-up">
+      <div class="amc-tag">Save 33%</div>
+      <h3>HydroSmart AMC</h3>
+      <p style="color: var(--soft); font-size: 13px;">All-inclusive annual maintenance for every device.</p>
+      <div class="amc-price">₹8,400 <small>/year</small></div>
+      <ul class="amc-benefits">
+        <li>Quarterly geyser inspection</li>
+        <li>Solar panel cleaning x 4</li>
+        <li>Filter replacement included</li>
+        <li>Priority technician dispatch</li>
+      </ul>
+      <button class="btn btn-success" style="width: 100%;">Subscribe to AMC →</button>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-water">
+  <div class="page-head fade-up">
+    <div>
+      <div class="eyebrow">— Module 3</div>
+      <h1>Water tank <em>level &amp; history</em>.</h1>
+      <p class="lede">Real-time water level, consumption trends, and refill history for your 1000L Sintex tank.</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card fade-up">
+      <div class="card-head">
+        <div>
+          <h3>Live tank level</h3>
+          <div class="sub">Updated 2 minutes ago</div>
+        </div>
+        <span class="status-pill ok"><span class="pulse-dot"></span>Healthy</span>
+      </div>
+      <div class="card-body" style="padding: 32px;">
+        <div class="tank-vis">
+          <div class="tank-water" style="height: 72%;"></div>
+          <div class="tank-percent">72%</div>
+          <div class="tank-marks">
+            <div class="tank-mark">100%</div>
+            <div class="tank-mark">75%</div>
+            <div class="tank-mark">50%</div>
+            <div class="tank-mark">25%</div>
+            <div class="tank-mark">0%</div>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 24px; font-family: var(--display); font-size: 26px; font-weight: 800;">
+          720L <span style="color: var(--muted); font-weight: 600; font-size: 18px;">/ 1000L</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 18px;">
+      <div class="card fade-up">
+        <div class="card-body">
+          <div class="ds-label">Daily average</div>
+          <div class="ds-value" style="font-size: 32px; color: var(--water-1);">142L</div>
+          <div class="ds-sub">▼ 8% lower than last week</div>
+        </div>
+      </div>
+      <div class="card fade-up">
+        <div class="card-body">
+          <div class="ds-label">Days remaining</div>
+          <div class="ds-value" style="font-size: 32px; color: var(--filter-1);">5 days</div>
+          <div class="ds-sub">At current usage rate</div>
+        </div>
+      </div>
+      <div class="card fade-up">
+        <div class="card-body">
+          <div class="ds-label">Last refill</div>
+          <div class="ds-value" style="font-size: 32px;">Today</div>
+          <div class="ds-sub">04:12 AM · Auto motor</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card fade-up" style="margin-bottom: 28px;">
+    <div class="card-head">
+      <div>
+        <h3>14-day level history</h3>
+        <div class="sub">Daily peak readings</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <svg class="chart-svg" viewBox="0 0 800 240" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="waterGrad" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <g stroke="rgba(255,255,255,0.06)" stroke-dasharray="4">
+          <line x1="0" y1="60" x2="800" y2="60"/>
+          <line x1="0" y1="120" x2="800" y2="120"/>
+          <line x1="0" y1="180" x2="800" y2="180"/>
+        </g>
+        <path d="M0,80 L60,60 L120,90 L180,40 L240,70 L300,30 L360,50 L420,90 L480,60 L540,100 L600,140 L660,110 L720,90 L800,67" fill="none" stroke="#00d4ff" stroke-width="3"/>
+        <path d="M0,80 L60,60 L120,90 L180,40 L240,70 L300,30 L360,50 L420,90 L480,60 L540,100 L600,140 L660,110 L720,90 L800,67 L800,240 L0,240 Z" fill="url(#waterGrad)"/>
+        <g fill="#00d4ff">
+          <circle cx="0" cy="80" r="4"/><circle cx="60" cy="60" r="4"/><circle cx="120" cy="90" r="4"/>
+          <circle cx="180" cy="40" r="4"/><circle cx="240" cy="70" r="4"/><circle cx="300" cy="30" r="4"/>
+          <circle cx="360" cy="50" r="4"/><circle cx="420" cy="90" r="4"/><circle cx="480" cy="60" r="4"/>
+          <circle cx="540" cy="100" r="4"/><circle cx="600" cy="140" r="4"/><circle cx="660" cy="110" r="4"/>
+          <circle cx="720" cy="90" r="4"/><circle cx="800" cy="67" r="5" stroke="white" stroke-width="2"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="card fade-up">
+    <div class="card-head">
+      <div>
+        <h3>Reading log</h3>
+        <div class="sub">Recent water level snapshots</div>
+      </div>
+      <a class="btn btn-ghost btn-sm">Export CSV</a>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Date</th><th>Time</th><th>Level</th><th>Volume</th><th>Status</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td>05 May 2026</td><td>06:00 AM</td><td><strong style="color: var(--water-1);">100%</strong></td><td>1000L</td><td><span class="status-pill ok">Refilled</span></td><td>Auto motor cycle</td></tr>
+          <tr><td>04 May 2026</td><td>11:30 PM</td><td><strong style="color: var(--warn);">22%</strong></td><td>220L</td><td><span class="status-pill warn">Low</span></td><td>Triggered refill</td></tr>
+          <tr><td>04 May 2026</td><td>06:00 PM</td><td>45%</td><td>450L</td><td><span class="status-pill ok">Normal</span></td><td>—</td></tr>
+          <tr><td>04 May 2026</td><td>12:00 PM</td><td>62%</td><td>620L</td><td><span class="status-pill ok">Normal</span></td><td>—</td></tr>
+          <tr><td>04 May 2026</td><td>06:00 AM</td><td>78%</td><td>780L</td><td><span class="status-pill ok">Normal</span></td><td>—</td></tr>
+          <tr><td>03 May 2026</td><td>06:00 PM</td><td>88%</td><td>880L</td><td><span class="status-pill ok">Normal</span></td><td>—</td></tr>
+          <tr><td>03 May 2026</td><td>06:00 AM</td><td>95%</td><td>950L</td><td><span class="status-pill ok">Normal</span></td><td>—</td></tr>
+          <tr><td>02 May 2026</td><td>06:00 PM</td><td><strong style="color: var(--bad);">100%</strong></td><td>1000L</td><td><span class="status-pill bad">Overflow</span></td><td>Sensor calibration adjusted</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-solar">
+  <div class="page-head fade-up">
+    <div>
+      <div class="eyebrow">— Module 4</div>
+      <h1>Solar <em>energy tracking</em>.</h1>
+      <p class="lede">Generation, consumption, and savings for your 3kW Tata rooftop array. Eight panels working at 90% efficiency.</p>
+    </div>
+  </div>
+
+  <div class="kpi-grid stagger">
+    <div class="kpi solar">
+      <div class="kpi-icon">⚡</div>
+      <div class="kpi-label">Generated (Month)</div>
+      <div class="kpi-value">412<span class="kpi-unit">kWh</span></div>
+      <div class="kpi-trend">▲ <strong>+8%</strong> vs April</div>
+    </div>
+    <div class="kpi water">
+      <div class="kpi-icon">🔌</div>
+      <div class="kpi-label">Consumed (Month)</div>
+      <div class="kpi-value">298<span class="kpi-unit">kWh</span></div>
+      <div class="kpi-trend">114 kWh exported</div>
+    </div>
+    <div class="kpi pay">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">Saved (Month)</div>
+      <div class="kpi-value">₹3,296</div>
+      <div class="kpi-trend">▲ <strong>+12%</strong> savings</div>
+    </div>
+    <div class="kpi filter">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-label">Efficiency</div>
+      <div class="kpi-value">90<span class="kpi-unit">%</span></div>
+      <div class="kpi-trend"><strong>Excellent</strong> condition</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card fade-up">
+      <div class="card-head">
+        <div>
+          <h3>Monthly generation</h3>
+          <div class="sub">kWh produced — last 8 months</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="bar-chart">
+          <div class="bar-col"><div class="bar-bar" style="height: 60%;"><div class="bar-val">312</div></div><div class="bar-label">Oct</div></div>
+          <div class="bar-col"><div class="bar-bar" style="height: 55%;"><div class="bar-val">285</div></div><div class="bar-label">Nov</div></div>
+          <div class="bar-col"><div class="bar-bar" style="height: 50%;"><div class="bar-val">258</div></div><div class="bar-label">Dec</div></div>
+          <div class="bar-col"><div class="bar-bar" style="height: 65%;"><div class="bar-val">335</div></div><div class="bar-label">Jan</div></div>
+          <div class="bar-col"><div class="bar-bar" style="height: 75%;"><div class="bar-val">385</div></div><div class="bar-label">Feb</div></div>
+          <div class="bar-col"><div class="bar-bar" style="height: 88%;"><div class="bar-val">456</div></div><div class="bar-label">Mar</div></div>
+          <div class="bar-col"><div class="bar-bar" style="height: 95%;"><div class="bar-val">488</div></div><div class="bar-label">Apr</div></div>
+          <div class="bar-col"><div class="bar-bar" style="height: 100%; background: linear-gradient(180deg, var(--solar-1), var(--geyser-2));"><div class="bar-val" style="color: var(--solar-1);">576</div></div><div class="bar-label" style="color: var(--text); font-weight: 800;">May</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-up">
+      <div class="card-head">
+        <div>
+          <h3>Efficiency</h3>
+          <div class="sub">System health gauge</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="gauge-wrap" style="position: relative;">
+          <svg class="gauge-svg" viewBox="0 0 100 100">
+            <circle class="gauge-track" cx="50" cy="50" r="40"/>
+            <circle class="gauge-fill" cx="50" cy="50" r="40"
+              stroke="url(#solarGrad)"
+              stroke-dasharray="251.2"
+              stroke-dashoffset="25.12"/>
+            <defs>
+              <linearGradient id="solarGrad" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stop-color="#ffd60a"/>
+                <stop offset="100%" stop-color="#ff5e3a"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="gauge-center" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+            <div class="gauge-value" style="color: var(--solar-1);">90%</div>
+            <div class="gauge-label">Efficiency</div>
+          </div>
+        </div>
+        <div style="text-align: center; padding: 0 20px 20px; color: var(--soft); font-size: 13px;">
+          Last cleaned 13 days ago. Next cleaning recommended <strong style="color: var(--text);">June 5, 2026</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card fade-up">
+    <div class="card-head">
+      <div>
+        <h3>Service history</h3>
+        <div class="sub">Cleaning, inverter checks, battery service</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Date</th><th>Service</th><th>Technician</th><th>Notes</th><th>Cost</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>22 Apr 2026</td><td>Panel cleaning</td><td>Ravi Kumar</td><td>All 8 panels rinsed, no defects</td><td>₹450</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>14 Mar 2026</td><td>Inverter check</td><td>Suresh M.</td><td>Firmware updated</td><td>Free (AMC)</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>20 Feb 2026</td><td>Battery replacement</td><td>Ravi Kumar</td><td>2x Luminous 150Ah</td><td>₹18,400</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>10 Jan 2026</td><td>Panel cleaning</td><td>Ravi Kumar</td><td>Bird droppings cleaned</td><td>₹450</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>05 Jun 2026</td><td>Panel cleaning</td><td>Ravi Kumar</td><td>Scheduled</td><td>Free (AMC)</td><td><span class="status-pill info">Upcoming</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-filter">
+  <div class="page-head fade-up">
+    <div>
+      <div class="eyebrow">— Module 5</div>
+      <h1>Water filter <em>&amp; quality</em>.</h1>
+      <p class="lede">Aquaguard RO+UV — installed Aug 2024. Health below replacement threshold.</p>
+    </div>
+  </div>
+
+  <div class="alert warn fade-up">
+    <div class="alert-icon">⚠️</div>
+    <div style="flex: 1;">
+      <div class="alert-title">Filter health below threshold (38%)</div>
+      <div class="alert-desc">We recommend replacing the cartridge before May 15, 2026 to maintain water quality.</div>
+    </div>
+    <button class="btn btn-warn">Schedule replacement</button>
+  </div>
+
+  <div class="kpi-grid stagger">
+    <div class="kpi filter">
+      <div class="kpi-icon">⚗️</div>
+      <div class="kpi-label">Filter Health</div>
+      <div class="kpi-value" style="color: var(--bad);">38<span class="kpi-unit">%</span></div>
+      <div class="kpi-trend">Below 50% threshold</div>
+    </div>
+    <div class="kpi water">
+      <div class="kpi-icon">🧪</div>
+      <div class="kpi-label">TDS Reading</div>
+      <div class="kpi-value">142<span class="kpi-unit">ppm</span></div>
+      <div class="kpi-trend"><strong>Acceptable</strong> range</div>
+    </div>
+    <div class="kpi service">
+      <div class="kpi-icon">⚖️</div>
+      <div class="kpi-label">pH Level</div>
+      <div class="kpi-value">7.2</div>
+      <div class="kpi-trend">Slightly alkaline (good)</div>
+    </div>
+    <div class="kpi pay">
+      <div class="kpi-icon">💎</div>
+      <div class="kpi-label">Hardness</div>
+      <div class="kpi-value">Soft</div>
+      <div class="kpi-trend">68 ppm CaCO₃</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card fade-up">
+      <div class="card-head">
+        <div>
+          <h3>6-month trend</h3>
+          <div class="sub">Filter health vs TDS reading</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <svg class="chart-svg" viewBox="0 0 800 280">
+          <defs>
+            <linearGradient id="filterHealth" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#00ffa3" stop-opacity="0.5"/>
+              <stop offset="100%" stop-color="#00ffa3" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g stroke="rgba(255,255,255,0.06)" stroke-dasharray="4">
+            <line x1="0" y1="50" x2="800" y2="50"/>
+            <line x1="0" y1="100" x2="800" y2="100"/>
+            <line x1="0" y1="150" x2="800" y2="150"/>
+            <line x1="0" y1="200" x2="800" y2="200"/>
+          </g>
+          <line x1="0" y1="170" x2="800" y2="170" stroke="#ff4d4d" stroke-dasharray="6" stroke-width="1.5" opacity="0.6"/>
+          <text x="10" y="165" fill="#ff4d4d" font-size="11" font-family="JetBrains Mono">50% threshold</text>
+
+          <!-- Health line (declining) -->
+          <path d="M0,40 L130,55 L260,75 L390,100 L520,135 L650,170 L780,210" fill="none" stroke="#00ffa3" stroke-width="3"/>
+          <path d="M0,40 L130,55 L260,75 L390,100 L520,135 L650,170 L780,210 L780,280 L0,280 Z" fill="url(#filterHealth)"/>
+
+          <!-- TDS line (rising) -->
+          <path d="M0,200 L130,190 L260,180 L390,165 L520,145 L650,130 L780,115" fill="none" stroke="#00d4ff" stroke-width="3" stroke-dasharray="6,4"/>
+
+          <g fill="#00ffa3">
+            <circle cx="0" cy="40" r="4"/><circle cx="130" cy="55" r="4"/><circle cx="260" cy="75" r="4"/>
+            <circle cx="390" cy="100" r="4"/><circle cx="520" cy="135" r="4"/><circle cx="650" cy="170" r="4"/>
+            <circle cx="780" cy="210" r="5" fill="#ff4d4d"/>
+          </g>
+
+          <g fill="var(--muted)" font-size="11" font-family="JetBrains Mono">
+            <text x="0" y="270">Nov</text><text x="130" y="270">Dec</text><text x="260" y="270">Jan</text>
+            <text x="390" y="270">Feb</text><text x="520" y="270">Mar</text><text x="650" y="270">Apr</text>
+            <text x="755" y="270">May</text>
+          </g>
+        </svg>
+        <div style="display: flex; gap: 18px; padding-top: 16px; border-top: 1px solid var(--border); margin-top: 16px; font-size: 13px;">
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 3px; background: var(--filter-1);"></span>Filter health %</div>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 3px; border-top: 2px dashed var(--water-1);"></span>TDS reading (ppm)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-up">
+      <div class="card-head">
+        <div>
+          <h3>Replacement</h3>
+          <div class="sub">Cost &amp; timeline</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="timeline" style="flex-direction: column; gap: 0; padding: 0;">
+          <div class="timeline-pt" style="width: 100%; margin-bottom: 8px;">
+            <div class="timeline-label">Last replaced</div>
+            <div class="timeline-date">12 Aug 2025</div>
+          </div>
+          <div style="width: 2px; height: 30px; background: linear-gradient(180deg, var(--filter-1), var(--ticket-2));"></div>
+          <div class="timeline-pt" style="width: 100%; margin-top: 8px; background: rgba(255,87,34,0.1); border: 1px solid var(--ticket-2);">
+            <div class="timeline-label" style="color: var(--ticket-1);">Next due</div>
+            <div class="timeline-date">15 May 2026</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">in 10 days</div>
+          </div>
+        </div>
+
+        <div style="padding-top: 22px; margin-top: 22px; border-top: 1px solid var(--border);">
+          <div class="ds-label">Estimated cost</div>
+          <div class="price-big" style="color: var(--filter-1); margin: 8px 0;">₹2,200</div>
+          <div style="font-size: 13px; color: var(--soft);">Includes cartridge + technician visit. <strong style="color: var(--pay-1);">Save 10%</strong> if you prepay.</div>
+          <button class="btn btn-success" style="width: 100%; margin-top: 16px;">Book service →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card fade-up">
+    <div class="card-head">
+      <div>
+        <h3>Replacement history</h3>
+        <div class="sub">Past cartridge changes</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Date</th><th>Cartridge type</th><th>Technician</th><th>Cost</th><th>Warranty</th></tr></thead>
+        <tbody>
+          <tr><td>12 Aug 2025</td><td>RO+UV combo</td><td>Suresh M.</td><td>₹2,100</td><td>9 months</td></tr>
+          <tr><td>10 Aug 2024</td><td>RO+UV combo (initial)</td><td>Aquaguard Service</td><td>Included</td><td>12 months</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-service">
+  <div class="page-head fade-up">
+    <div>
+      <div class="eyebrow">— Module 6</div>
+      <h1>Service &amp; <em>repair history</em>.</h1>
+      <p class="lede">Every visit, every part replaced, every rupee spent — tracked from day one.</p>
+    </div>
+  </div>
+
+  <div class="kpi-grid stagger">
+    <div class="kpi service">
+      <div class="kpi-icon">📋</div>
+      <div class="kpi-label">Total Services</div>
+      <div class="kpi-value">28</div>
+      <div class="kpi-trend">Since Aug 2024</div>
+    </div>
+    <div class="kpi water">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-label">This Year</div>
+      <div class="kpi-value">7</div>
+      <div class="kpi-trend">▼ 12% vs last year</div>
+    </div>
+    <div class="kpi pay">
+      <div class="kpi-icon">💸</div>
+      <div class="kpi-label">Total Spent</div>
+      <div class="kpi-value">₹16,840</div>
+      <div class="kpi-trend">In 2026</div>
+    </div>
+    <div class="kpi ticket">
+      <div class="kpi-icon">⏰</div>
+      <div class="kpi-label">Upcoming</div>
+      <div class="kpi-value">3</div>
+      <div class="kpi-trend">Next 30 days</div>
+    </div>
+  </div>
+
+  <div class="card fade-up" style="margin-bottom: 28px;">
+    <div class="card-head">
+      <div>
+        <h3>Upcoming maintenance</h3>
+        <div class="sub">Scheduled services for the next 30 days</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="three-col">
+        <div style="padding: 18px; background: rgba(255,77,141,0.1); border: 1px solid rgba(255,77,141,0.3); border-radius: var(--radius-sm);">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+            <div class="device-icon geyser" style="width: 36px; height: 36px; font-size: 18px;">♨️</div>
+            <strong>Geyser annual</strong>
+          </div>
+          <div style="font-size: 13px; color: var(--soft); margin-bottom: 4px;">Tank flush, element check</div>
+          <div style="font-family: var(--display); font-size: 18px; font-weight: 800;">May 22, 2026</div>
+        </div>
+        <div style="padding: 18px; background: rgba(0,255,163,0.1); border: 1px solid rgba(0,255,163,0.3); border-radius: var(--radius-sm);">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+            <div class="device-icon filter" style="width: 36px; height: 36px; font-size: 18px;">⚗️</div>
+            <strong>Filter cartridge</strong>
+          </div>
+          <div style="font-size: 13px; color: var(--soft); margin-bottom: 4px;">RO+UV replacement</div>
+          <div style="font-family: var(--display); font-size: 18px; font-weight: 800;">May 15, 2026</div>
+        </div>
+        <div style="padding: 18px; background: rgba(255,149,0,0.1); border: 1px solid rgba(255,149,0,0.3); border-radius: var(--radius-sm);">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+            <div class="device-icon solar" style="width: 36px; height: 36px; font-size: 18px;">☀️</div>
+            <strong>Inverter inspection</strong>
+          </div>
+          <div style="font-size: 13px; color: var(--soft); margin-bottom: 4px;">Firmware + connections</div>
+          <div style="font-family: var(--display); font-size: 18px; font-weight: 800;">June 5, 2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card fade-up">
+    <div class="card-head">
+      <div>
+        <h3>Service log</h3>
+        <div class="sub">Filter by device or technician</div>
+      </div>
+      <a class="btn btn-ghost btn-sm">Export PDF</a>
+    </div>
+    <div class="card-body" style="padding-bottom: 0;">
+      <div class="chips">
+        <div class="chip active">All (28)</div>
+        <div class="chip">Geyser</div>
+        <div class="chip">Solar</div>
+        <div class="chip">Tank</div>
+        <div class="chip">Filter</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Date</th><th>Device</th><th>Type</th><th>Technician</th><th>Parts</th><th>Cost</th><th>Warranty</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>22 Apr 2026</td><td>Solar Panel</td><td>Cleaning</td><td>Ravi Kumar</td><td>—</td><td>₹450</td><td>—</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>14 Mar 2026</td><td>Solar Inverter</td><td>Inspection</td><td>Suresh M.</td><td>—</td><td>Free</td><td>—</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>02 Mar 2026</td><td>Geyser</td><td>Element check</td><td>Ravi Kumar</td><td>Heating element</td><td>₹1,200</td><td>6 months</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>20 Feb 2026</td><td>Solar Battery</td><td>Replacement</td><td>Ravi Kumar</td><td>2x Luminous 150Ah</td><td>₹18,400</td><td>24 months</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>10 Jan 2026</td><td>Solar Panel</td><td>Cleaning</td><td>Ravi Kumar</td><td>—</td><td>₹450</td><td>—</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>05 Jan 2026</td><td>Water Tank</td><td>Sensor calibration</td><td>Suresh M.</td><td>Float sensor</td><td>₹650</td><td>3 months</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>15 Dec 2025</td><td>Filter</td><td>Quality test</td><td>Suresh M.</td><td>—</td><td>Free</td><td>—</td><td><span class="status-pill ok">Done</span></td></tr>
+          <tr><td>22 May 2026</td><td>Geyser</td><td>Annual service</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="status-pill info">Upcoming</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-complaints">
+  <div class="page-head fade-up">
+    <div>
+      <div class="eyebrow">— Module 7</div>
+      <h1>Complaints &amp; <em>tickets</em>.</h1>
+      <p class="lede">Raise an issue, track progress through Open → Assigned → In Progress → Resolved.</p>
+    </div>
+    <button class="btn btn-warn" onclick="document.getElementById('new-complaint').scrollIntoView({behavior:'smooth'});">+ New complaint</button>
+  </div>
+
+  <div class="kpi-grid stagger">
+    <div class="kpi ticket"><div class="kpi-icon">📬</div><div class="kpi-label">Open</div><div class="kpi-value">2</div><div class="kpi-trend">Awaiting assignment</div></div>
+    <div class="kpi service"><div class="kpi-icon">👷</div><div class="kpi-label">Assigned</div><div class="kpi-value">1</div><div class="kpi-trend">Technician booked</div></div>
+    <div class="kpi solar"><div class="kpi-icon">⚙️</div><div class="kpi-label">In Progress</div><div class="kpi-value">1</div><div class="kpi-trend">Active right now</div></div>
+    <div class="kpi pay"><div class="kpi-icon">✅</div><div class="kpi-label">Resolved</div><div class="kpi-value">12</div><div class="kpi-trend">All-time</div></div>
+  </div>
+
+  <div class="card fade-up" style="margin-bottom: 28px;">
+    <div class="card-head"><div><h3>Active tickets</h3><div class="sub">Live status across your complaints</div></div></div>
+    <div class="card-body">
+
+      <div class="ticket-card expanded">
+        <div class="ticket-head">
+          <div>
+            <div class="ticket-id">TKT-2026-038</div>
+            <div class="ticket-title">Solar inverter beeping intermittently</div>
+            <div class="ticket-meta">Raised 02 May · Solar Panel · Severity: <strong style="color: var(--warn);">Medium</strong></div>
+          </div>
+          <span class="status-pill warn">⚙ In progress</span>
+        </div>
+
+        <div class="stepper">
+          <div class="step done"><div class="step-circle">✓</div><div class="step-label">Open</div></div>
+          <div class="step done"><div class="step-circle">✓</div><div class="step-label">Assigned</div></div>
+          <div class="step current"><div class="step-circle">●</div><div class="step-label">In Progress</div></div>
+          <div class="step"><div class="step-circle">4</div><div class="step-label">Resolved</div></div>
+        </div>
+
+        <div style="padding: 14px; background: rgba(0,212,255,0.06); border-left: 3px solid var(--water-1); border-radius: 8px;">
+          <div style="font-size: 12px; color: var(--muted); font-weight: 700; margin-bottom: 4px;">LATEST UPDATE · Ravi Kumar</div>
+          <div style="font-size: 13px;">Diagnosed loose DC connection at junction box. Replacing terminal block today. Will update once tested.</div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-head">
+          <div>
+            <div class="ticket-id">TKT-2026-039</div>
+            <div class="ticket-title">Water filter strange taste after rainy day</div>
+            <div class="ticket-meta">Raised 04 May · Water Filter · Severity: <strong style="color: var(--warn);">Medium</strong></div>
+          </div>
+          <span class="status-pill info">👷 Assigned</span>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-head">
+          <div>
+            <div class="ticket-id">TKT-2026-040</div>
+            <div class="ticket-title">Geyser temperature display flickering</div>
+            <div class="ticket-meta">Raised 04 May · Geyser · Severity: <strong style="color: var(--pay-1);">Low</strong></div>
+          </div>
+          <span class="status-pill bad">📬 Open</span>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-head">
+          <div>
+            <div class="ticket-id">TKT-2026-041</div>
+            <div class="ticket-title">Tank refill motor not engaging at 20% threshold</div>
+            <div class="ticket-meta">Raised 05 May · Water Tank · Severity: <strong style="color: var(--bad);">High</strong></div>
+          </div>
+          <span class="status-pill bad">📬 Open</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card fade-up" style="margin-bottom: 28px;">
+    <div class="card-head"><div><h3>Recently resolved</h3><div class="sub">With customer feedback</div></div></div>
+    <div class="card-body">
+      <div class="ticket-card" style="border-left: 3px solid var(--pay-1);">
+        <div class="ticket-head">
+          <div>
+            <div class="ticket-id">TKT-2026-035</div>
+            <div class="ticket-title">Solar panel efficiency dropped to 72%</div>
+            <div class="ticket-meta">Resolved 22 Apr · Cleaning solved the issue</div>
+          </div>
+          <div style="text-align: right;">
+            <span class="status-pill ok">✓ Resolved</span>
+            <div class="stars" style="margin-top: 6px;">★★★★★</div>
+          </div>
+        </div>
+      </div>
+      <div class="ticket-card" style="border-left: 3px solid var(--pay-1);">
+        <div class="ticket-head">
+          <div>
+            <div class="ticket-id">TKT-2026-031</div>
+            <div class="ticket-title">Geyser making knocking sound</div>
+            <div class="ticket-meta">Resolved 02 Mar · Element replaced</div>
+          </div>
+          <div style="text-align: right;">
+            <span class="status-pill ok">✓ Resolved</span>
+            <div class="stars" style="margin-top: 6px;">★★★★☆</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card fade-up" id="new-complaint">
+    <div class="card-head"><div><h3>Raise a new complaint</h3><div class="sub">A technician will be assigned within 24 hours</div></div></div>
+    <div class="card-body">
+      <form onsubmit="event.preventDefault(); alert('Complaint submitted! Ticket # TKT-2026-042 created. Demo only.');">
+        <div class="form-grid">
+          <div class="field">
+            <label>Device</label>
+            <select>
+              <option>Geyser</option><option>Solar Panel</option><option>Water Tank</option><option>Water Filter</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Severity</label>
+            <div class="severity-toggle">
+              <div class="sev low" onclick="toggleSev(this, 'low')">Low</div>
+              <div class="sev med active" onclick="toggleSev(this, 'med')">Medium</div>
+              <div class="sev high" onclick="toggleSev(this, 'high')">High</div>
+            </div>
+          </div>
+          <div class="field full">
+            <label>Describe the issue</label>
+            <textarea rows="3" placeholder="What's happening? When did it start? Any unusual sounds, smells, or readings?" style="resize: vertical;"></textarea>
+          </div>
+          <div class="field">
+            <label>Preferred visit date</label>
+            <input type="date" />
+          </div>
+          <div class="field">
+            <label>Time slot</label>
+            <select><option>9:00 AM – 12:00 PM</option><option>12:00 PM – 3:00 PM</option><option>3:00 PM – 6:00 PM</option></select>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--border);">
+          <button type="button" class="btn btn-ghost">Cancel</button>
+          <button type="submit" class="btn btn-warn">Submit complaint</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-payments">
+  <div class="page-head fade-up">
+    <div>
+      <div class="eyebrow">— Module 8</div>
+      <h1>Payments &amp; <em>subscription</em>.</h1>
+      <p class="lede">One-time service payments and your annual maintenance contract.</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="invoice-card fade-up">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; opacity: 0.85;">Pending invoice</div>
+          <div style="font-family: var(--mono); font-size: 13px; opacity: 0.85; margin-top: 2px;">INV-2026-0501</div>
+        </div>
+        <div class="invoice-due">⚡ Due in 6 days</div>
+      </div>
+      <div class="invoice-amount">₹2,450</div>
+      <div style="opacity: 0.9;">Filter cartridge replacement + technician visit</div>
+      <button class="btn" style="background: white; color: var(--ticket-2); width: auto; margin-top: 22px; padding: 14px 32px;">Pay now →</button>
+    </div>
+
+    <div class="amc-card fade-up">
+      <div class="amc-tag">Save ₹4,200</div>
+      <h3>HydroSmart AMC</h3>
+      <p style="color: var(--soft); font-size: 13px;">All-inclusive annual care.</p>
+      <div class="amc-price">₹8,400 <small>/year</small></div>
+      <ul class="amc-benefits">
+        <li>Quarterly geyser service</li>
+        <li>Solar panel cleaning x 4</li>
+        <li>Filter replacement included</li>
+        <li>Priority technician dispatch</li>
+      </ul>
+      <button class="btn btn-success" style="width: 100%;">Subscribe →</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid stagger">
+    <div class="kpi pay"><div class="kpi-icon">💰</div><div class="kpi-label">Paid This Year</div><div class="kpi-value">₹14,390</div><div class="kpi-trend">8 transactions</div></div>
+    <div class="kpi ticket"><div class="kpi-icon">⚠️</div><div class="kpi-label">Outstanding</div><div class="kpi-value">₹2,450</div><div class="kpi-trend">1 invoice pending</div></div>
+    <div class="kpi solar"><div class="kpi-icon">📅</div><div class="kpi-label">Next Due</div><div class="kpi-value">11 May</div><div class="kpi-trend">In 6 days</div></div>
+    <div class="kpi water"><div class="kpi-icon">🎁</div><div class="kpi-label">AMC Saved</div><div class="kpi-value">₹6,800</div><div class="kpi-trend">Estimated annual</div></div>
+  </div>
+
+  <div class="card fade-up" style="margin-bottom: 28px;">
+    <div class="card-head"><div><h3>Pay invoice INV-2026-0501</h3><div class="sub">Choose your preferred payment method</div></div></div>
+    <div class="card-body">
+
+      <div class="pay-methods" style="margin-bottom: 22px;">
+        <div class="pay-method active" onclick="pickPay(this)">
+          <div class="pay-icon">📱</div>
+          <div class="pay-name">UPI</div>
+        </div>
+        <div class="pay-method" onclick="pickPay(this)">
+          <div class="pay-icon">💳</div>
+          <div class="pay-name">Credit Card</div>
+        </div>
+        <div class="pay-method" onclick="pickPay(this)">
+          <div class="pay-icon">🏧</div>
+          <div class="pay-name">Debit Card</div>
+        </div>
+        <div class="pay-method" onclick="pickPay(this)">
+          <div class="pay-icon">🏦</div>
+          <div class="pay-name">Net Banking</div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field full">
+          <label>UPI ID</label>
+          <input type="text" placeholder="yourname@bank" />
+        </div>
+      </div>
+
+      <div style="margin-top: 22px; padding: 18px; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm);">
+        <div style="display: flex; justify-content: space-between; padding: 6px 0;"><span style="color: var(--soft);">Service charge</span><strong>₹2,200</strong></div>
+        <div style="display: flex; justify-content: space-between; padding: 6px 0;"><span style="color: var(--soft);">GST (18%)</span><strong>₹250</strong></div>
+        <div style="display: flex; justify-content: space-between; padding: 12px 0 0; border-top: 1px solid var(--border); margin-top: 6px;">
+          <strong style="font-size: 15px;">Total</strong>
+          <strong style="font-family: var(--display); font-size: 22px; color: var(--pay-1);">₹2,450</strong>
+        </div>
+      </div>
+
+      <button class="btn btn-success" style="width: 100%; margin-top: 18px;">Pay ₹2,450 →</button>
+    </div>
+  </div>
+
+  <div class="card fade-up">
+    <div class="card-head"><div><h3>Payment history</h3><div class="sub">Last 12 months</div></div></div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Date</th><th>Invoice</th><th>Service</th><th>Method</th><th>Txn ref</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>22 Apr 2026</td><td>INV-2026-0422</td><td>Solar cleaning</td><td>UPI</td><td style="font-family: var(--mono);">UPI78234561</td><td><strong>₹450</strong></td><td><span class="status-pill ok">Paid</span></td></tr>
+          <tr><td>14 Mar 2026</td><td>INV-2026-0314</td><td>Inverter check (AMC)</td><td>—</td><td>—</td><td><strong>₹0</strong></td><td><span class="status-pill ok">Free</span></td></tr>
+          <tr><td>02 Mar 2026</td><td>INV-2026-0302</td><td>Geyser element</td><td>Credit Card</td><td style="font-family: var(--mono);">CC92837100</td><td><strong>₹1,200</strong></td><td><span class="status-pill ok">Paid</span></td></tr>
+          <tr><td>20 Feb 2026</td><td>INV-2026-0220</td><td>Battery replacement</td><td>Net Banking</td><td style="font-family: var(--mono);">NB12390400</td><td><strong>₹18,400</strong></td><td><span class="status-pill ok">Paid</span></td></tr>
+          <tr><td>10 Jan 2026</td><td>INV-2026-0110</td><td>Panel cleaning</td><td>UPI</td><td style="font-family: var(--mono);">UPI56712890</td><td><strong>₹450</strong></td><td><span class="status-pill ok">Paid</span></td></tr>
+          <tr><td>05 Jan 2026</td><td>INV-2026-0105</td><td>Tank sensor</td><td>UPI</td><td style="font-family: var(--mono);">UPI11223344</td><td><strong>₹650</strong></td><td><span class="status-pill ok">Paid</span></td></tr>
+          <tr><td>12 Aug 2025</td><td>INV-2025-0812</td><td>Filter replacement</td><td>Credit Card</td><td style="font-family: var(--mono);">CC44556677</td><td><strong>₹2,100</strong></td><td><span class="status-pill ok">Paid</span></td></tr>
+          <tr><td>01 May 2026</td><td>INV-2026-0501</td><td>Filter (upcoming)</td><td>—</td><td>—</td><td><strong>₹2,450</strong></td><td><span class="status-pill warn">Pending</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-devices">
+  <div class="page-head fade-up">
+    <div>
+      <div class="eyebrow">— Account</div>
+      <h1>Your registered <em>devices</em>.</h1>
+      <p class="lede">Add a new appliance, update warranty info, or remove devices you no longer use.</p>
+    </div>
+    <button class="btn btn-primary" style="width: auto;" onclick="document.getElementById('add-dev').scrollIntoView({behavior:'smooth'});">+ Register a device</button>
+  </div>
+
+  <div class="devices-grid stagger" style="margin-bottom: 28px;">
+    <div class="device-card geyser">
+      <div class="device-head">
+        <div class="device-icon geyser">♨️</div>
+        <div>
+          <div class="device-name">Geyser</div>
+          <div class="device-meta">Racold Eterno · 25L · Bathroom</div>
+        </div>
+        <span class="status-pill ok">Active</span>
+      </div>
+      <div class="device-stats">
+        <div><div class="ds-label">Model</div><div class="ds-value" style="font-family: var(--mono); font-size: 14px;">RC-ETN-25H</div></div>
+        <div><div class="ds-label">Installed</div><div class="ds-value" style="font-size: 16px;">14 Mar 2023</div></div>
+        <div><div class="ds-label">Warranty</div><div class="ds-value" style="font-size: 16px; color: var(--ok);">Until 2028</div></div>
+        <div style="display: flex; gap: 6px; align-items: flex-end; justify-content: flex-end;">
+          <button class="btn btn-ghost btn-sm">Edit</button>
+        </div>
+      </div>
+    </div>
+    <div class="device-card solar">
+      <div class="device-head">
+        <div class="device-icon solar">☀️</div>
+        <div>
+          <div class="device-name">Solar Panel</div>
+          <div class="device-meta">Tata 3kW · 8 panels · Rooftop</div>
+        </div>
+        <span class="status-pill ok">Active</span>
+      </div>
+      <div class="device-stats">
+        <div><div class="ds-label">Model</div><div class="ds-value" style="font-family: var(--mono); font-size: 14px;">TP-3KW-8P</div></div>
+        <div><div class="ds-label">Installed</div><div class="ds-value" style="font-size: 16px;">2 Aug 2024</div></div>
+        <div><div class="ds-label">Warranty</div><div class="ds-value" style="font-size: 16px; color: var(--ok);">Until 2049</div></div>
+        <div style="display: flex; gap: 6px; align-items: flex-end; justify-content: flex-end;">
+          <button class="btn btn-ghost btn-sm">Edit</button>
+        </div>
+      </div>
+    </div>
+    <div class="device-card tank">
+      <div class="device-head">
+        <div class="device-icon tank">🪣</div>
+        <div>
+          <div class="device-name">Water Tank</div>
+          <div class="device-meta">Sintex 1000L · Terrace</div>
+        </div>
+        <span class="status-pill ok">Active</span>
+      </div>
+      <div class="device-stats">
+        <div><div class="ds-label">Model</div><div class="ds-value" style="font-family: var(--mono); font-size: 14px;">SX-1000L-DT</div></div>
+        <div><div class="ds-label">Installed</div><div class="ds-value" style="font-size: 16px;">10 Aug 2024</div></div>
+        <div><div class="ds-label">Warranty</div><div class="ds-value" style="font-size: 16px; color: var(--ok);">Until 2034</div></div>
+        <div style="display: flex; gap: 6px; align-items: flex-end; justify-content: flex-end;">
+          <button class="btn btn-ghost btn-sm">Edit</button>
+        </div>
+      </div>
+    </div>
+    <div class="device-card filter">
+      <div class="device-head">
+        <div class="device-icon filter">⚗️</div>
+        <div>
+          <div class="device-name">Water Filter</div>
+          <div class="device-meta">Aquaguard RO+UV · Kitchen</div>
+        </div>
+        <span class="status-pill warn">Replace</span>
+      </div>
+      <div class="device-stats">
+        <div><div class="ds-label">Model</div><div class="ds-value" style="font-family: var(--mono); font-size: 14px;">AQ-ROUV-7L</div></div>
+        <div><div class="ds-label">Installed</div><div class="ds-value" style="font-size: 16px;">10 Aug 2024</div></div>
+        <div><div class="ds-label">Warranty</div><div class="ds-value" style="font-size: 16px; color: var(--warn);">Until 2026</div></div>
+        <div style="display: flex; gap: 6px; align-items: flex-end; justify-content: flex-end;">
+          <button class="btn btn-ghost btn-sm">Edit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card fade-up" id="add-dev">
+    <div class="card-head"><div><h3>Register a new device</h3><div class="sub">Add a geyser, solar panel, water tank or filter</div></div></div>
+    <div class="card-body">
+
+      <div style="font-size: 12px; font-weight: 700; color: var(--soft); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;">Device type</div>
+      <div class="role-picker" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 22px;">
+        <div class="role-card active" onclick="pickRole(this)"><div class="role-icon">♨️</div><div class="role-name">Geyser</div></div>
+        <div class="role-card" onclick="pickRole(this)"><div class="role-icon">☀️</div><div class="role-name">Solar Panel</div></div>
+        <div class="role-card" onclick="pickRole(this)"><div class="role-icon">🪣</div><div class="role-name">Water Tank</div></div>
+        <div class="role-card" onclick="pickRole(this)"><div class="role-icon">⚗️</div><div class="role-name">Water Filter</div></div>
+      </div>
+
+      <form onsubmit="event.preventDefault(); alert('Device registered! Demo only.');">
+        <div class="form-grid">
+          <div class="field"><label>Device nickname</label><input type="text" placeholder="e.g. Master bedroom geyser" /></div>
+          <div class="field"><label>Brand &amp; model</label><input type="text" placeholder="e.g. Racold Eterno 25L" /></div>
+          <div class="field"><label>Model number</label><input type="text" placeholder="e.g. RC-ETN-25H" /></div>
+          <div class="field"><label>Serial number</label><input type="text" placeholder="From back of unit" /></div>
+          <div class="field"><label>Installation date</label><input type="date" /></div>
+          <div class="field"><label>Warranty (years)</label><select><option>1</option><option>2</option><option selected>5</option><option>10</option><option>25</option></select></div>
+          <div class="field full"><label>Location at home</label><input type="text" placeholder="e.g. Kitchen, terrace, master bath" /></div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--border);">
+          <button type="button" class="btn btn-ghost">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="width: auto;">Register device</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script>
+  // ============================================================
+  // Screen routing
+  // ============================================================
+  let currentRole = 'Customer';
+
+  function show(screenName) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + screenName).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function pickRole(el, role) {
+    el.parentElement.querySelectorAll('.role-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    if (role) currentRole = role;
+  }
+
+  function doLogin() {
+    try {
+      const roleEl = document.getElementById('sb-user-role');
+      if (roleEl) roleEl.textContent = currentRole || 'Customer';
+    } catch (e) { /* ignore */ }
+    show('app');
+    goto('dashboard');
+    return false;
+  }
+
+  function doLogout() {
+    show('login');
+  }
+
+  // ============================================================
+  // Page rendering inside the app shell
+  // ============================================================
+  const PAGE_TITLES = {
+    dashboard: 'Dashboard',
+    water: 'Water Tank',
+    solar: 'Solar Energy',
+    filter: 'Water Filter',
+    service: 'Service History',
+    complaints: 'Complaints',
+    payments: 'Payments',
+    devices: 'My Devices'
+  };
+
+  function goto(pageName) {
+    const tpl = document.getElementById('tpl-' + pageName);
+    if (!tpl) return;
+    const content = document.getElementById('page-content');
+    content.innerHTML = '';
+    content.appendChild(tpl.content.cloneNode(true));
+
+    // active nav
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    const activeLink = document.querySelector('.nav-link[data-page="' + pageName + '"]');
+    if (activeLink) activeLink.classList.add('active');
+
+    // crumb
+    document.getElementById('crumb-page').textContent = PAGE_TITLES[pageName] || pageName;
+
+    // scroll to top of main
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ============================================================
+  // Misc widgets
+  // ============================================================
+  function toggleSev(el, level) {
+    el.parentElement.querySelectorAll('.sev').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function pickPay(el) {
+    el.parentElement.querySelectorAll('.pay-method').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
